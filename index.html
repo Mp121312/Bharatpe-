@@ -35,7 +35,7 @@ body {
 /* Header */
 .header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
 }
 .header h1 {
     font-size: 1.8rem; font-weight: 800;
@@ -56,7 +56,7 @@ body {
 }
 .icon-btn:hover { background: var(--primary-light); border-color: var(--primary); }
 
-/* Filter panel */
+/* Filter panel (hidden by default) */
 .filter-panel {
     background: white;
     border-radius: var(--radius);
@@ -142,7 +142,8 @@ body {
     <div class="header">
         <h1>💰 Payments</h1>
         <div class="icons">
-            <button class="icon-btn" onclick="toggleFilter()">🔍</button>
+            <button class="icon-btn" onclick="toggleFilter()" title="Filter">🔍</button>
+            <button class="icon-btn" onclick="reloadPage()" title="Refresh">🔄</button>
         </div>
     </div>
 
@@ -260,6 +261,10 @@ async function loadPage(page) {
 
 function toggleFilter() {
     document.getElementById('filterPanel').classList.toggle('show');
+}
+
+function reloadPage() {
+    loadPage(currentPage);
 }
 
 // Auto load
