@@ -17,22 +17,41 @@ body{font-family:Arial;background:#f8fafc;padding:20px}
   <div id="content">Loading...</div>
 </div>
 <script>
-fetch('/api/transactions')
-  .then(r => r.json())
-  .then(data => {
-    if (data.success) {
-      let html = `<div class="total-card"><h2>Total Received</h2><div style="font-size:2rem;font-weight:bold">₹${data.total.toFixed(2)}</div><div>${data.count} transactions</div></div>`;
-      data.transactions.forEach(t => {
-        html += `<div class="txn"><div><strong>${t.payerName || 'Unknown'}</strong><div style="font-size:0.8rem;color:#666">${new Date(t.paymentTimestamp).toLocaleString('en-IN')}</div></div><div class="amount">+₹${parseFloat(t.amount).toFixed(2)}</div></div>`;
-      });
-      document.getElementById('content').innerHTML = html;
-    } else {
-      document.getElementById('content').innerText = 'Error: ' + (data.error || 'Failed');
+async function loadPayments() {
+  const merchantId = '2179854';
+  const token = 'a7bb042f6a204602abdee270f47e4ada';
+  const cookies = 'eyJpdiI6IkMxenVoc2pYMnpqTzFcL0dhT3JWdEVnPT0iLCJ2YWx1ZSI6InpQeGYwYnlPZGJZbTVnUHdrMEhwZEpEQ1dlN2REYUd5blRHc3JDXC9sOFFxczhkMHJqT2grc040TjdGS0NrRU1OUGhFU2Rlc0h3eEhFeTV1UWEzMWFsMGJNMlJOTlE5Z2h4ODJ6aWFMWTkwRWlXTTZPUFwvdHJIVUZ1bFY3TXh3SGYiLCJtYWMiOiI1NTFkY2RhZWQ4NjIzOTM3YTkxMTExNGJkOWIyYjgyMDc3NzY5Zjg4ZGEwNDU2ZjJkMjEyYzExMzM4ZmE4ZTBkIn0=';
+  const fromTs = Date.now() - 86400000;
+  const toTs = Date.now();
+  const apiUrl = `https://payments-tesseract.bharatpe.in/api/v1/merchant/transactions?module=PAYMENT_QR&merchantId=${merchantId}&sDate=${fromTs}&eDate=${toTs}&pageSize=5&pageCount=0`;
+
+  try {
+    const res = await fetch(apiUrl, {
+      headers: {
+        'token': token,
+        'Cookie': cookies,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'Referer': 'https://enterprise.bharatpe.in/'
+      }
+    });
+    if (!res.ok) {
+      document.getElementById('content').innerText = 'API Error: HTTP ' + res.status;
+      return;
     }
-  })
-  .catch(err => {
-    document.getElementById('content').innerText = 'Network error';
-  });
+    const data = await res.json();
+    const transactions = data?.data?.transactions || [];
+    const total = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+    let html = `<div class="total-card"><h2>Total Received</h2><div style="font-size:2rem;font-weight:bold">₹${total.toFixed(2)}</div><div>${transactions.length} transactions</div></div>`;
+    transactions.forEach(t => {
+      html += `<div class="txn"><div><strong>${t.payerName || 'Unknown'}</strong><div style="font-size:0.8rem;color:#666">${new Date(t.paymentTimestamp).toLocaleString('en-IN')}</div></div><div class="amount">+₹${parseFloat(t.amount).toFixed(2)}</div></div>`;
+    });
+    document.getElementById('content').innerHTML = html;
+  } catch (err) {
+    document.getElementById('content').innerText = 'Network error: ' + err.message;
+  }
+}
+loadPayments();
 </script>
 </body>
 </html>
