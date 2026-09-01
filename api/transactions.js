@@ -1,4 +1,5 @@
-export default async function handler(req, res) {
+// api/transactions.js – CommonJS format (no "type": "module" needed)
+module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   const { merchantId, token, cookies, from, to, pageSize = 200, search = '' } = req.query;
 
@@ -36,4 +37,4 @@ export default async function handler(req, res) {
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
-}
+};
