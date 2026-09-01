@@ -4,68 +4,177 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
 <title>BharatPe Payments</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root { --primary:#6C5CE7; --primary-dark:#5A4BD1; --primary-light:#EDE9FE; --success:#00B894; --text:#2D3436; --bg:#F8F9FA; --card:#fff; --radius:16px; --shadow:0 8px 20px rgba(0,0,0,0.06); }
+:root {
+    --primary: #6C5CE7;
+    --primary-dark: #5A4BD1;
+    --primary-light: #EDE9FE;
+    --success: #00B894;
+    --text: #2D3436;
+    --text-secondary: #636E72;
+    --muted: #B2BEC3;
+    --bg: #F8F9FA;
+    --card-bg: #FFFFFF;
+    --border: #E0E0E0;
+    --radius-sm: 10px;
+    --radius: 16px;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+    --shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); padding:20px 14px; }
-.container { max-width:600px; margin:auto; }
-.top-bar { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
-.top-bar h1 { font-size:1.8rem; font-weight:800; background:linear-gradient(135deg,var(--primary),#A29BFE); -webkit-background-clip:text; -webkit-text-fill-color:transparent; flex:1; }
-.icon-btn { width:44px; height:44px; border-radius:12px; background:white; border:1.5px solid #e0e0e0; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.2rem; box-shadow:var(--shadow); }
-.filter-panel { background:var(--card); border-radius:var(--radius); padding:16px; margin-bottom:20px; display:none; animation:slideDown .25s ease; }
-.filter-panel.show { display:block; }
-@keyframes slideDown { from{opacity:0; transform:translateY(-10px);} to{opacity:1; transform:translateY(0);} }
-.filter-row { display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
-.filter-row label { font-size:0.7rem; font-weight:700; color:#636E72; text-transform:uppercase; display:block; margin-bottom:4px; }
-.filter-row input, .filter-row select { flex:1; min-width:120px; padding:10px; border:1px solid #e0e0e0; border-radius:8px; }
-.apply-btn { padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer; }
-.total-card { background:linear-gradient(135deg,#6C5CE7,#8B7CF6); color:white; border-radius:var(--radius); padding:20px; margin-bottom:20px; }
-.total-amount { font-size:2rem; font-weight:800; }
-.txn-list { display:flex; flex-direction:column; gap:10px; }
-.txn-card { background:white; border-radius:10px; padding:14px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); }
-.avatar { width:40px; height:40px; border-radius:50%; background:#EDE9FE; display:flex; align-items:center; justify-content:center; font-weight:700; color:#6C5CE7; }
-.txn-details { flex:1; }
-.txn-name { font-weight:600; font-size:0.9rem; }
-.txn-meta { font-size:0.7rem; color:#636E72; }
-.txn-amount { font-weight:700; color:#00B894; }
-.empty-msg { text-align:center; color:#999; padding:30px; }
-.pagination { display:flex; gap:10px; justify-content:center; margin:15px 0; }
-.pagination button { padding:8px 16px; border-radius:8px; border:1px solid #ddd; background:white; cursor:pointer; }
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px 14px;
+    min-height: 100vh;
+}
+.container { max-width: 600px; margin: 0 auto; }
+
+/* Header */
+.header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+}
+.header h1 {
+    font-size: 1.8rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), #A29BFE);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.header .icons { display: flex; gap: 8px; }
+.icon-btn {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+}
+.icon-btn:hover { background: var(--primary-light); border-color: var(--primary); }
+
+/* Filter panel */
+.filter-panel {
+    background: white;
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    display: none;
+    animation: slideDown 0.2s ease;
+}
+.filter-panel.show { display: block; }
+@keyframes slideDown {
+    from { opacity:0; transform: translateY(-10px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+.filter-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.filter-row label { font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+.filter-row input {
+    flex: 1; padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+.apply-btn {
+    padding: 10px 16px;
+    background: var(--primary);
+    color: white; border: none;
+    border-radius: 8px; font-weight: 600; cursor: pointer;
+}
+
+/* Total card */
+.total-card {
+    background: linear-gradient(135deg, #6C5CE7, #8B7CF6);
+    color: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(108,92,231,0.3);
+}
+.total-label { font-size: 0.8rem; font-weight: 600; opacity: 0.9; }
+.total-amount { font-size: 2rem; font-weight: 800; margin-top: 4px; }
+.total-sub { font-size: 0.8rem; opacity: 0.8; }
+
+/* Transaction list */
+.txn-list { display: flex; flex-direction: column; gap: 10px; }
+.txn-card {
+    background: white;
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.15s;
+}
+.txn-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem;
+}
+.txn-details { flex: 1; }
+.txn-name { font-weight: 600; font-size: 0.9rem; }
+.txn-meta { font-size: 0.7rem; color: var(--text-secondary); margin-top: 2px; }
+.txn-amount { font-weight: 700; color: var(--success); }
+.empty-msg { text-align: center; color: var(--muted); padding: 30px; }
+.loading {
+    display: flex; justify-content: center; align-items: center;
+    padding: 30px;
+}
+.spinner {
+    width: 30px; height: 30px;
+    border: 3px solid rgba(108,92,231,0.2);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 <div class="container">
-    <div class="top-bar">
+    <div class="header">
         <h1>💰 Payments</h1>
-        <button class="icon-btn" onclick="toggleFilter()">🔍</button>
-        <button class="icon-btn" onclick="loadAll()">♾️</button>
+        <div class="icons">
+            <button class="icon-btn" onclick="toggleFilter()">🔍</button>
+        </div>
     </div>
 
     <div class="filter-panel" id="filterPanel">
         <div class="filter-row">
-            <div style="flex:1;"><label>From</label><input type="date" id="fromDate"></div>
-            <div style="flex:1;"><label>To</label><input type="date" id="toDate"></div>
+            <div style="flex:1;">
+                <label>From</label>
+                <input type="date" id="fromDate">
+            </div>
+            <div style="flex:1;">
+                <label>To</label>
+                <input type="date" id="toDate">
+            </div>
         </div>
         <div class="filter-row">
             <input type="text" id="searchInput" placeholder="Search name/UTR/amount">
         </div>
-        <button class="apply-btn" onclick="loadPage(0)">Apply Filters</button>
+        <button class="apply-btn" onclick="loadPage(0)">Apply</button>
     </div>
 
-    <div id="totalCard" class="total-card" style="display:none;"></div>
-    <div id="txnList" class="txn-list"></div>
-    <div id="pagination" class="pagination"></div>
+    <div id="totalCard" style="display:none;"></div>
+    <div id="txnList"></div>
 </div>
 
 <script>
-const urlParams = new URLSearchParams(window.location.search);
-const merchantId = urlParams.get('merchantId') || '';
-const token = urlParams.get('token') || '';
-const cookies = urlParams.get('cookies') || '';
-const fromDate = urlParams.get('from') || '';
-const toDate = urlParams.get('to') || '';
-const search = urlParams.get('search') || '';
+const params = new URLSearchParams(window.location.search);
+const merchantId = params.get('merchantId');
+const token = params.get('token');
+const cookies = params.get('cookies');
+const fromDate = params.get('from') || '';
+const toDate = params.get('to') || '';
+const search = params.get('search') || '';
 
 document.getElementById('fromDate').value = fromDate;
 document.getElementById('toDate').value = toDate;
@@ -110,11 +219,10 @@ function render(transactions) {
     const total = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
     document.getElementById('totalCard').style.display = 'block';
     document.getElementById('totalCard').innerHTML = `
-        <div>Total Received</div>
+        <div class="total-label">Total Received</div>
         <div class="total-amount">₹${total.toFixed(2)}</div>
-        <div>${transactions.length} transaction(s)</div>
+        <div class="total-sub">${transactions.length} transaction(s)</div>
     `;
-
     const list = document.getElementById('txnList');
     if (transactions.length === 0) {
         list.innerHTML = '<div class="empty-msg">No payments found.</div>';
@@ -136,35 +244,15 @@ function render(transactions) {
 }
 
 async function loadPage(page) {
+    if (!merchantId || !token || !cookies) {
+        document.getElementById('txnList').innerHTML = '<div class="empty-msg">Missing merchant details.</div>';
+        return;
+    }
     try {
-        document.getElementById('txnList').innerHTML = 'Loading...';
+        document.getElementById('txnList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
         const transactions = await fetchTransactions(page);
         render(transactions);
         currentPage = page;
-        document.getElementById('pagination').innerHTML = `
-            <button onclick="loadPage(${currentPage-1})" ${currentPage===0?'disabled':''}>Previous</button>
-            <span>Page ${currentPage+1}</span>
-            <button onclick="loadPage(${currentPage+1})">Next</button>
-        `;
-    } catch (err) {
-        document.getElementById('txnList').innerHTML = `<div class="empty-msg">Error: ${err.message}</div>`;
-    }
-}
-
-async function loadAll() {
-    try {
-        document.getElementById('txnList').innerHTML = 'Loading all transactions...';
-        let all = [];
-        let page = 0;
-        while (true) {
-            const batch = await fetchTransactions(page);
-            if (batch.length === 0) break;
-            all = all.concat(batch);
-            page++;
-            if (batch.length < pageSize) break;
-        }
-        render(all);
-        document.getElementById('pagination').innerHTML = '';
     } catch (err) {
         document.getElementById('txnList').innerHTML = `<div class="empty-msg">Error: ${err.message}</div>`;
     }
@@ -174,11 +262,11 @@ function toggleFilter() {
     document.getElementById('filterPanel').classList.toggle('show');
 }
 
-// Auto-load if merchant details present
+// Auto load
 if (merchantId && token && cookies) {
     loadPage(0);
 } else {
-    document.getElementById('txnList').innerHTML = '<div class="empty-msg">Missing parameters. Please provide merchantId, token, cookies in URL.</div>';
+    document.getElementById('txnList').innerHTML = '<div class="empty-msg">No merchant selected.</div>';
 }
 </script>
 </body>
