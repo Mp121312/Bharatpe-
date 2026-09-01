@@ -5,53 +5,181 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body{font-family:Arial;background:#f8fafc;padding:20px}
-.container{max-width:600px;margin:auto}
+.container{max-width:700px;margin:auto}
 .total-card{background:linear-gradient(135deg,#6C5CE7,#8B7CF6);color:#fff;padding:20px;border-radius:15px;margin-bottom:20px}
 .txn{background:#fff;padding:14px;border-radius:10px;margin-bottom:10px;display:flex;justify-content:space-between}
 .amount{font-weight:bold;color:#00B894}
+.error{color:red;font-size:0.9rem}
+input,button,textarea{padding:10px;margin:5px 0;border-radius:8px;border:1px solid #ddd}
+button{cursor:pointer}
+.btn-primary{background:#6C5CE7;color:#fff;border:none}
+.btn-outline{background:#fff;color:#333;border:1px solid #ddd}
+.pagination{display:flex;gap:10px;align-items:center;margin:15px 0}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>💰 Payments</h1>
+
+  <div style="background:#fff;padding:15px;border-radius:10px;margin-bottom:20px;">
+    <label>Merchant ID</label>
+    <input type="text" id="merchantIdInput" placeholder="e.g., 2179854" style="width:100%;">
+    <label>Token</label>
+    <input type="text" id="tokenInput" placeholder="Token" style="width:100%;">
+    <label>Cookies</label>
+    <textarea id="cookiesInput" placeholder="Cookies string" rows="2" style="width:100%;"></textarea>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:120px;">
+        <label>From Date</label>
+        <input type="date" id="fromDateInput" style="width:100%;">
+      </div>
+      <div style="flex:1;min-width:120px;">
+        <label>To Date</label>
+        <input type="date" id="toDateInput" style="width:100%;">
+      </div>
+      <div style="flex:1;min-width:120px;">
+        <label>Search</label>
+        <input type="text" id="searchInput" placeholder="Name/UTR/Amount" style="width:100%;">
+      </div>
+    </div>
+    <button class="btn-primary" onclick="loadPayments(0)">Load Payments</button>
+    <button class="btn-outline" onclick="loadAllPayments()">Load All History</button>
+  </div>
+
   <div id="content">Loading...</div>
 </div>
+
 <script>
-async function loadPayments() {
-  const merchantId = '2179854';
-  const token = 'a7bb042f6a204602abdee270f47e4ada';
-  const cookies = 'eyJpdiI6IkMxenVoc2pYMnpqTzFcL0dhT3JWdEVnPT0iLCJ2YWx1ZSI6InpQeGYwYnlPZGJZbTVnUHdrMEhwZEpEQ1dlN2REYUd5blRHc3JDXC9sOFFxczhkMHJqT2grc040TjdGS0NrRU1OUGhFU2Rlc0h3eEhFeTV1UWEzMWFsMGJNMlJOTlE5Z2h4ODJ6aWFMWTkwRWlXTTZPUFwvdHJIVUZ1bFY3TXh3SGYiLCJtYWMiOiI1NTFkY2RhZWQ4NjIzOTM3YTkxMTExNGJkOWIyYjgyMDc3NzY5Zjg4ZGEwNDU2ZjJkMjEyYzExMzM4ZmE4ZTBkIn0=';
-  const fromTs = Date.now() - 86400000;
-  const toTs = Date.now();
-  const apiUrl = `https://payments-tesseract.bharatpe.in/api/v1/merchant/transactions?module=PAYMENT_QR&merchantId=${merchantId}&sDate=${fromTs}&eDate=${toTs}&pageSize=5&pageCount=0`;
+const urlParams = new URLSearchParams(window.location.search);
+document.getElementById('merchantIdInput').value = urlParams.get('merchantId') || '';
+document.getElementById('tokenInput').value = urlParams.get('token') || '';
+document.getElementById('cookiesInput').value = urlParams.get('cookies') || '';
+document.getElementById('fromDateInput').value = urlParams.get('from') || '';
+document.getElementById('toDateInput').value = urlParams.get('to') || '';
+
+let currentPage = 0;
+let totalPages = 1;
+let lastParams = {};
+
+async function fetchTransactions(params) {
+  const apiUrl = `https://payments-tesseract.bharatpe.in/api/v1/merchant/transactions?module=PAYMENT_QR&merchantId=${params.merchantId}&sDate=${params.fromTs}&eDate=${params.toTs}&pageSize=${params.pageSize}&pageCount=${params.pageCount}`;
+  const res = await fetch(apiUrl, {
+    headers: {
+      'token': params.token,
+      'Cookie': params.cookies,
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Accept': 'application/json',
+      'Referer': 'https://enterprise.bharatpe.in/'
+    }
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  return data?.data?.transactions || [];
+}
+
+function renderTransactions(transactions) {
+  if (transactions.length === 0) {
+    document.getElementById('content').innerHTML = '<p>No payments found.</p>';
+    return;
+  }
+  const total = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+  let html = `<div class="total-card"><h2>Total Received</h2><div style="font-size:2rem;font-weight:bold">₹${total.toFixed(2)}</div><div>${transactions.length} transactions</div></div>`;
+  transactions.forEach(t => {
+    const payer = t.payerName || 'Unknown';
+    const utr = t.bankReferenceNo || '';
+    const ts = t.paymentTimestamp || 0;
+    html += `<div class="txn"><div><strong>${payer}</strong><div style="font-size:0.8rem;color:#666">${new Date(ts).toLocaleString('en-IN')} #${utr}</div></div><div class="amount">+₹${parseFloat(t.amount).toFixed(2)}</div></div>`;
+  });
+  document.getElementById('content').innerHTML = html;
+}
+
+async function loadPayments(page) {
+  const merchantId = document.getElementById('merchantIdInput').value.trim();
+  const token = document.getElementById('tokenInput').value.trim();
+  const cookies = document.getElementById('cookiesInput').value.trim();
+  const fromDate = document.getElementById('fromDateInput').value;
+  const toDate = document.getElementById('toDateInput').value;
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  if (!merchantId || !token || !cookies) {
+    document.getElementById('content').innerHTML = '<p class="error">कृपया सभी fields भरें।</p>';
+    return;
+  }
+
+  const fromTs = fromDate ? new Date(fromDate).getTime() : Date.now() - 86400000;
+  const toTs = toDate ? new Date(toDate).getTime() + 86399000 : Date.now();
+
+  lastParams = { merchantId, token, cookies, fromTs, toTs, pageSize: 200, pageCount: page };
 
   try {
-    const res = await fetch(apiUrl, {
-      headers: {
-        'token': token,
-        'Cookie': cookies,
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-        'Referer': 'https://enterprise.bharatpe.in/'
-      }
-    });
-    if (!res.ok) {
-      document.getElementById('content').innerText = 'API Error: HTTP ' + res.status;
-      return;
+    document.getElementById('content').innerHTML = 'Loading...';
+    let transactions = await fetchTransactions(lastParams);
+    if (search) {
+      transactions = transactions.filter(t =>
+        (t.payerName || '').toLowerCase().includes(search) ||
+        (t.bankReferenceNo || '').toLowerCase().includes(search) ||
+        String(t.amount || '').includes(search)
+      );
     }
-    const data = await res.json();
-    const transactions = data?.data?.transactions || [];
-    const total = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-    let html = `<div class="total-card"><h2>Total Received</h2><div style="font-size:2rem;font-weight:bold">₹${total.toFixed(2)}</div><div>${transactions.length} transactions</div></div>`;
-    transactions.forEach(t => {
-      html += `<div class="txn"><div><strong>${t.payerName || 'Unknown'}</strong><div style="font-size:0.8rem;color:#666">${new Date(t.paymentTimestamp).toLocaleString('en-IN')}</div></div><div class="amount">+₹${parseFloat(t.amount).toFixed(2)}</div></div>`;
-    });
-    document.getElementById('content').innerHTML = html;
+    renderTransactions(transactions);
+    // Pagination info
+    currentPage = page;
+    totalPages = Math.ceil(transactions.length / 200); // rough estimate
+    let paginationHtml = `<div class="pagination">
+      <button class="btn-outline" onclick="loadPayments(${currentPage-1})" ${currentPage===0?'disabled':''}>Previous</button>
+      <span>Page ${currentPage+1} / ${totalPages}</span>
+      <button class="btn-outline" onclick="loadPayments(${currentPage+1})">Next</button>
+    </div>`;
+    document.getElementById('content').insertAdjacentHTML('beforebegin', paginationHtml);
   } catch (err) {
-    document.getElementById('content').innerText = 'Network error: ' + err.message;
+    document.getElementById('content').innerHTML = `<p class="error">Error: ${err.message}</p>`;
   }
 }
-loadPayments();
+
+async function loadAllPayments() {
+  const merchantId = document.getElementById('merchantIdInput').value.trim();
+  const token = document.getElementById('tokenInput').value.trim();
+  const cookies = document.getElementById('cookiesInput').value.trim();
+  const fromDate = document.getElementById('fromDateInput').value;
+  const toDate = document.getElementById('toDateInput').value;
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  if (!merchantId || !token || !cookies) {
+    document.getElementById('content').innerHTML = '<p class="error">कृपया सभी fields भरें।</p>';
+    return;
+  }
+
+  const fromTs = fromDate ? new Date(fromDate).getTime() : 0; // सभी समय से
+  const toTs = toDate ? new Date(toDate).getTime() + 86399000 : Date.now();
+
+  document.getElementById('content').innerHTML = 'Loading all transactions...';
+  let allTxns = [];
+  let page = 0;
+  try {
+    while (true) {
+      const txns = await fetchTransactions({ merchantId, token, cookies, fromTs, toTs, pageSize: 200, pageCount: page });
+      if (txns.length === 0) break;
+      allTxns = allTxns.concat(txns);
+      page++;
+      if (txns.length < 200) break; // अंतिम page
+    }
+    if (search) {
+      allTxns = allTxns.filter(t =>
+        (t.payerName || '').toLowerCase().includes(search) ||
+        (t.bankReferenceNo || '').toLowerCase().includes(search) ||
+        String(t.amount || '').includes(search)
+      );
+    }
+    renderTransactions(allTxns);
+  } catch (err) {
+    document.getElementById('content').innerHTML = `<p class="error">Error: ${err.message}</p>`;
+  }
+}
+
+// Auto-load if URL params exist
+if (document.getElementById('merchantIdInput').value) {
+  loadPayments(0);
+}
 </script>
 </body>
 </html>
