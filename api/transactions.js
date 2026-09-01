@@ -1,7 +1,6 @@
-// api/transactions.js – CommonJS format (no "type": "module" needed)
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  const { merchantId, token, cookies, from, to, pageSize = 200, search = '' } = req.query;
+  const { merchantId, token, cookies, from, to, pageSize = 200 } = req.query;
 
   if (!merchantId || !token || !cookies) {
     return res.status(400).json({ success: false, error: 'Missing parameters' });
@@ -23,17 +22,8 @@ module.exports = async (req, res) => {
       }
     });
     const data = await response.json();
-    let transactions = data?.data?.transactions || [];
-    if (search) {
-      const s = search.toLowerCase();
-      transactions = transactions.filter(t =>
-        (t.payerName || '').toLowerCase().includes(s) ||
-        (t.bankReferenceNo || '').toLowerCase().includes(s) ||
-        String(t.amount || '').includes(s)
-      );
-    }
-    const total = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-    res.status(200).json({ success: true, total, count: transactions.length, transactions });
+    const transactions = data?.data?.transactions || [];
+    res.status(200).json({ success: true, total: 0, count: transactions.length, transactions });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
