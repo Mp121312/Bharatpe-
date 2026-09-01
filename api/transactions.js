@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  const { merchantId, token, cookies, from, to, pageSize = 5, pageCount = 0, search = '' } = req.query;
+  const { merchantId, token, cookies, from, to, pageSize = 200, search = '' } = req.query;
 
   if (!merchantId || !token || !cookies) {
     return res.status(400).json({ success: false, error: 'Missing parameters' });
@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   const fromTs = from ? new Date(from).getTime() : Date.now() - 86400000;
   const toTs = to ? new Date(to).getTime() + 86399000 : Date.now();
 
-  const apiUrl = `https://payments-tesseract.bharatpe.in/api/v1/merchant/transactions?module=PAYMENT_QR&merchantId=${merchantId}&sDate=${fromTs}&eDate=${toTs}&pageSize=${pageSize}&pageCount=${pageCount}`;
+  const apiUrl = `https://payments-tesseract.bharatpe.in/api/v1/merchant/transactions?module=PAYMENT_QR&merchantId=${merchantId}&sDate=${fromTs}&eDate=${toTs}&pageSize=${pageSize}&pageCount=0`;
 
   try {
     const response = await fetch(apiUrl, {
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     let transactions = data?.data?.transactions || [];
     if (search) {
       const s = search.toLowerCase();
-      transactions = transactions.filter(t => 
+      transactions = transactions.filter(t =>
         (t.payerName || '').toLowerCase().includes(s) ||
         (t.bankReferenceNo || '').toLowerCase().includes(s) ||
         String(t.amount || '').includes(s)
