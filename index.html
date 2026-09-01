@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>BharatPe Payments</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial;background:#f8fafc;padding:20px}
+.container{max-width:600px;margin:auto}
+.total-card{background:linear-gradient(135deg,#6C5CE7,#8B7CF6);color:#fff;padding:20px;border-radius:15px;margin-bottom:20px}
+.txn{background:#fff;padding:14px;border-radius:10px;margin-bottom:10px;display:flex;justify-content:space-between}
+.amount{font-weight:bold;color:#00B894}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>💰 Payments</h1>
+  <div id="content">Loading...</div>
+</div>
+<script>
+fetch('/api/transactions')
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      let html = `<div class="total-card"><h2>Total Received</h2><div style="font-size:2rem;font-weight:bold">₹${data.total.toFixed(2)}</div><div>${data.count} transactions</div></div>`;
+      data.transactions.forEach(t => {
+        html += `<div class="txn"><div><strong>${t.payerName || 'Unknown'}</strong><div style="font-size:0.8rem;color:#666">${new Date(t.paymentTimestamp).toLocaleString('en-IN')}</div></div><div class="amount">+₹${parseFloat(t.amount).toFixed(2)}</div></div>`;
+      });
+      document.getElementById('content').innerHTML = html;
+    } else {
+      document.getElementById('content').innerText = 'Error: ' + (data.error || 'Failed');
+    }
+  })
+  .catch(err => {
+    document.getElementById('content').innerText = 'Network error';
+  });
+</script>
+</body>
+</html>
