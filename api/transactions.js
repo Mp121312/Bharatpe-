@@ -1,13 +1,16 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  const { from, to, pageSize = 5, search = '' } = req.query;
-  const merchantId = '2179854';
-  const token = 'a7bb042f6a204602abdee270f47e4ada';
-  const cookies = 'eyJpdiI6IkMxenVoc2pYMnpqTzFcL0dhT3JWdEVnPT0iLCJ2YWx1ZSI6InpQeGYwYnlPZGJZbTVnUHdrMEhwZEpEQ1dlN2REYUd5blRHc3JDXC9sOFFxczhkMHJqT2grc040TjdGS0NrRU1OUGhFU2Rlc0h3eEhFeTV1UWEzMWFsMGJNMlJOTlE5Z2h4ODJ6aWFMWTkwRWlXTTZPUFwvdHJIVUZ1bFY3TXh3SGYiLCJtYWMiOiI1NTFkY2RhZWQ4NjIzOTM3YTkxMTExNGJkOWIyYjgyMDc3NzY5Zjg4ZGEwNDU2ZjJkMjEyYzExMzM4ZmE4ZTBkIn0=';
+  const { merchantId, token, cookies, from, to, pageSize = 5, pageCount = 0, search = '' } = req.query;
+
+  if (!merchantId || !token || !cookies) {
+    return res.status(400).json({ success: false, error: 'Missing parameters' });
+  }
+
   const fromTs = from ? new Date(from).getTime() : Date.now() - 86400000;
   const toTs = to ? new Date(to).getTime() + 86399000 : Date.now();
-  const apiUrl = `https://payments-tesseract.bharatpe.in/api/v1/merchant/transactions?module=PAYMENT_QR&merchantId=${merchantId}&sDate=${fromTs}&eDate=${toTs}&pageSize=${pageSize}&pageCount=0`;
-  
+
+  const apiUrl = `https://payments-tesseract.bharatpe.in/api/v1/merchant/transactions?module=PAYMENT_QR&merchantId=${merchantId}&sDate=${fromTs}&eDate=${toTs}&pageSize=${pageSize}&pageCount=${pageCount}`;
+
   try {
     const response = await fetch(apiUrl, {
       headers: {
